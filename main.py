@@ -3,6 +3,7 @@ import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
 import io
 import zipfile
+from datetime import datetime
 
 st.set_page_config(page_title="하예성 복지센터 명세서", layout="wide")
 st.title("📄 하예성 복지센터 명세서 자동 생성기")
@@ -28,14 +29,18 @@ if file1 and file2:
             df1 = pd.read_excel(file1)
             df2 = pd.read_excel(file2)
             
-            # --- 날짜 자동 계산 로직 ---
-            # '일자' 컬럼을 날짜 형식으로 변환
+            # --- 날짜 자동 계산 ---
             df2['일자'] = pd.to_datetime(df2['일자'])
-            start_date = df2['일자'].min().strftime('%Y-%m-%d') # 제일 빠른 날
-            end_date = df2['일자'].max().strftime('%Y-%m-%d')   # 제일 늦은 날
-            date_range = f"{start_date} ~ {end_date}"
+            min_date = df2['일자'].min()
+            max_date = df2['일자'].max()
             
-            # 수가 계산 (콤마 제거 및 숫자 변환)
+            # 1. 급여제공기간용 (0000-00-00 ~ 0000-00-00)
+            date_range = f"{min_date.strftime('%Y-%m-%d')} ~ {max_date.strftime('%Y-%m-%d')}"
+            
+            # 2. 하단 발행일용 (0000년 00월 00일 - 해당 월의 말일)
+            publish_date = max_date.strftime('%Y년 %m월 %d일')
+            
+            # 수가 계산
             df2['수가'] = pd.to_numeric(df2['수가'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
             df2_sum = df2.groupby('수급자명')['수가'].sum().reset_index()
             
@@ -49,43 +54,30 @@ if file1 and file2:
                     own_pay = int(total_pay * user_rate) 
                     pub_pay = total_pay - own_pay 
                     
-                    # 이미지 열기 (오류 방지를 위해 최대한 단순하게 열기)
                     try:
                         img = Image.open("template.png")
-                        if img.mode != 'RGB':
-                            img = img.convert('RGB')
-                    except Exception as img_err:
-                        st.error("이미지 파일을 읽을 수 없습니다. template.png 파일을 삭제 후 다시 올려주세요.")
+                        if img.mode != 'RGB': img = img.convert('RGB')
+                    except:
+                        st.error("이미지 오류! template.png를 다시 확인해주세요.")
                         st.stop()
 
                     draw = ImageDraw.Draw(img)
                     
+                    # 폰트 설정 (맑은고딕)
                     try:
-                        font = ImageFont.truetype("malgun.ttf", 25)
-                        font_small = ImageFont.truetype("malgun.ttf", 20)
+                        font_main = ImageFont.truetype("malgun.ttf", 25)
+                        font_small = ImageFont.truetype("malgun.ttf", 18)
                     except:
-                        font = ImageFont.load_default()
-                        font_small = ImageFont.load_default()
+                        font_main = font_small = ImageFont.load_default()
                     
-                    # --- 좌표 입력 (사장님 양식 위치에 맞춰 조정 필요) ---
-                    # 1. 성명 및 정보
-                    draw.text((150, 240), str(row['수급자명']), fill="black", font=font)
+                    # --- [좌표 입력 섹션] 위치가 안 맞으면 아래 숫자들을 고치세요 ---
+                    
+                    # 상단 정보
+                    draw.text((150, 240), str(row['수급자명']), fill="black", font=font_main)
                     draw.text((150, 280), str(row['인정관리번호']), fill="black", font=font_small)
                     
-                    # 2. 💡 자동 계산된 날짜 기입 (급여제공기간 칸)
+                    # 중간 급여제공기간
                     draw.text((350, 240), date_range, fill="black", font=font_small)
                     
-                    # 3. 금액 기입
-                    draw.text((450, 420), f"{own_pay:,}", fill="black", font=font)
-                    draw.text((450, 450), f"{pub_pay:,}", fill="black", font=font)
-                    draw.text((450, 480), f"{total_pay:,}", fill="black", font=font)
-                    
-                    img_byte_arr = io.BytesIO()
-                    img.save(img_byte_arr, format='PNG')
-                    zip_file.writestr(f"{row['수급자명']}_명세서.png", img_byte_arr.getvalue())
-            
-            st.success(f"기간: {date_range} / 총 {len(final_df)}명 완료!")
-            st.download_button("📥 압축파일 다운로드", data=zip_buffer.getvalue(), file_name=f"하예성_명세서_{start_date[:7]}.zip")
-            
-        except Exception as e:
-            st.error(f"오류가 발생했습니다: {e}")
+                    # 금액표 (우측 정렬 느낌으로 좌표 조정 필요)
+                    draw.text((450, 420), f"{
