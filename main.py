@@ -25,7 +25,7 @@ def draw_invoice(row, date_range, publish_date_str):
     
     try:
         # 사장님 요청: 기존 크기(48, 42, 36)의 약 2/3인 30~32 수준으로 축소
-        f_name = ImageFont.truetype("malgun.ttf", 32) 
+        f_name = ImageFont.truetype("malgun.ttf", 28) 
         f_main = ImageFont.truetype("malgun.ttf", 28)
         f_date = ImageFont.truetype("malgun.ttf", 24)
     except:
@@ -35,21 +35,21 @@ def draw_invoice(row, date_range, publish_date_str):
     
    # 1. 인적사항: 더 왼쪽으로, 더 아래로 (Y축 760 -> 785)
     Y_LINE = 785 
-    draw.text((150, Y_LINE), str(row['수급자명']), fill="black", font=f_name) # X: 180->150
-    draw.text((350, Y_LINE + 5), str(row['인정관리번호']), fill="black", font=f_main) # X: 380->350
-    draw.text((700, Y_LINE + 10), date_range, fill="black", font=f_date) # X: 720->700
+    draw.text((170, Y_LINE), str(row['수급자명']), fill="black", font=f_name) # X: 180->150
+    draw.text((370, Y_LINE + 5), str(row['인정관리번호']), fill="black", font=f_main) # X: 380->350
+    draw.text((550, Y_LINE + 10), date_range, fill="black", font=f_date) # X: 720->700
     
     # 2. 왼쪽 '급여' 항목: 요청대로 위로 100 올리고, 왼쪽으로 더 많이(800->750) 이동
-    draw.text((750, 980), f"{own_amt:,}", fill="black", font=f_main) 
-    draw.text((750, 1100), f"{pub_amt:,}", fill="black", font=f_main) 
-    draw.text((750, 1220), f"{total_amt:,}", fill="black", font=f_main) 
+    draw.text((750, 880), f"{own_amt:,}", fill="black", font=f_main) 
+    draw.text((750, 930), f"{pub_amt:,}", fill="black", font=f_main) 
+    draw.text((750, 980), f"{total_amt:,}", fill="black", font=f_main) 
     
     # 3. 오른쪽 '금액산정내역': 오른쪽 선 침범 방지를 위해 왼쪽으로 많이 당김 (1350->1250)
-    draw.text((1250, 1020), f"{total_amt:,}", fill="black", font=f_main) 
-    draw.text((1250, 1260), f"{own_amt:,}", fill="black", font=f_main)
+    draw.text((1250, 950), f"{total_amt:,}", fill="black", font=f_main) 
+    draw.text((1250, 1050), f"{own_amt:,}", fill="black", font=f_main)
   
     # 4. 하단 발행일
-    draw.text((1250, 1700), publish_date_str, fill="black", font=f_main)
+    draw.text((1250, 1950), publish_date_str, fill="black", font=f_main)
     
     return img
 
