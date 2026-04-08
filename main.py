@@ -59,24 +59,36 @@ if file1 and file2:
 
                     draw = ImageDraw.Draw(img)
                     
-                    # 폰트 설정 (맑은고딕이 없으면 기본폰트 사용)
                     try:
                         font_main = ImageFont.truetype("malgun.ttf", 22)
                         font_small = ImageFont.truetype("malgun.ttf", 18)
                     except:
                         font_main = font_small = ImageFont.load_default()
                     
-                    # --- [좌표 입력 섹션] 사장님 양식에 맞춘 좌표 ---
-                    # 1. 상단 정보 (성명, 인정번호, 기간)
+                    # --- [좌표 입력] 위치가 안 맞으면 아래 숫자들을 조절하세요 ---
+                    # 1. 상단 정보
                     draw.text((150, 245), str(row['수급자명']), fill="black", font=font_main)
                     draw.text((150, 275), str(row['인정관리번호']), fill="black", font=font_small)
                     draw.text((380, 245), date_range, fill="black", font=font_small)
                     
-                    # 2. 금액표 (본인부담, 공단부담, 급여계)
-                    draw.text((300, 315), f"{own_pay:,}", fill="black", font=font_main)   # 본인부담금
-                    draw.text((300, 340), f"{pub_pay:,}", fill="black", font=font_main)   # 공단부담금
-                    draw.text((300, 365), f"{total_pay:,}", fill="black", font=font_main) # 급여계
+                    # 2. 금액표
+                    draw.text((300, 315), f"{own_pay:,}", fill="black", font=font_main)
+                    draw.text((300, 340), f"{pub_pay:,}", fill="black", font=font_main)
+                    draw.text((300, 365), f"{total_pay:,}", fill="black", font=font_main)
                     
-                    # 우측 상단 '총액(급여+비급여)' 칸 등에도 동일하게 기입
-                    draw.text((580, 315), f"{total_pay:,}", fill="black", font=font_main) # 총액
-                    draw.text((580, 35
+                    # 우측 총액 부분
+                    draw.text((580, 315), f"{total_pay:,}", fill="black", font=font_main)
+                    draw.text((580, 350), f"{own_pay:,}", fill="black", font=font_main)
+                    
+                    # 3. 하단 발행일 (말일)
+                    draw.text((580, 755), publish_date, fill="black", font=font_main)
+                    
+                    img_byte_arr = io.BytesIO()
+                    img.save(img_byte_arr, format='PNG')
+                    zip_file.writestr(f"{row['수급자명']}_명세서.png", img_byte_arr.getvalue())
+            
+            st.success(f"성공! {len(final_df)}명의 명세서가 준비되었습니다.")
+            st.download_button("📥 압축파일 다운로드", data=zip_buffer.getvalue(), file_name=f"하예성_명세서_{min_date.strftime('%Y%m')}.zip")
+            
+        except Exception as e:
+            st.error(f"오류가 발생했습니다: {e}")
