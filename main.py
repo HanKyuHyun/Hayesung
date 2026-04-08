@@ -49,7 +49,7 @@ def draw_invoice(row, date_range, publish_date_str, seq_num):
 
     # [0. 영수증 번호] 사장님 요청 좌표
     receipt_no = f"2026-03-{seq_num:02d}" 
-    draw.text((1350, 780), receipt_no, fill="black", font=f_main)
+    draw.text((1250, 780), receipt_no, fill="black", font=f_main)
 
     # [1. 인적사항] 사장님 좌표
     Y_LINE = 780 
