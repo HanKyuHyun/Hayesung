@@ -54,41 +54,50 @@ if file1 and file2:
                         img = Image.open("template.png")
                         if img.mode != 'RGB': img = img.convert('RGB')
                     except:
-                        st.error("이미지 오류! template.png 파일이 깃허브에 있는지 확인해주세요.")
+                        st.error("이미지 오류! 깃허브에 template.png 파일이 있는지 확인해주세요.")
                         st.stop()
 
                     draw = ImageDraw.Draw(img)
                     
+                    # 💡 거대 이미지에 맞춘 대형 폰트 설정 (기본 크기 10배 이상)
                     try:
-                        font_main = ImageFont.truetype("malgun.ttf", 22)
-                        font_small = ImageFont.truetype("malgun.ttf", 18)
+                        font_huge = ImageFont.truetype("malgun.ttf", 250) # 성명 등 메인 정보
+                        font_large = ImageFont.truetype("malgun.ttf", 180) # 인정번호 등 서브 정보
                     except:
-                        font_main = font_small = ImageFont.load_default()
+                        # 맑은고딕 없으면 기본폰트 사용 (기본폰트는 작아서 안보일수 있습니다)
+                        font_huge = font_large = ImageFont.load_default()
+                        st.warning("malgun.ttf 폰트 파일이 없어 기본 폰트를 사용합니다. 글자가 매우 작게 보일 수 있습니다.")
                     
-                    # --- [좌표 입력] 위치가 안 맞으면 아래 숫자들을 조절하세요 ---
+                    # --- [초고해상도 맞춤 좌표 섹션] ---
+                    # 사장님 양식의 정확한 위치는 모르지만, 이 거대 이미지 크기에 맞춘 대략적인 좌표입니다.
+                    # 결과물을 보시고 숫자를 조절해주세요.
+                    
                     # 1. 상단 정보
-                    draw.text((150, 245), str(row['수급자명']), fill="black", font=font_main)
-                    draw.text((150, 275), str(row['인정관리번호']), fill="black", font=font_small)
-                    draw.text((380, 245), date_range, fill="black", font=font_small)
+                    # (성명, 인정번호, 기간)
+                    draw.text((1500, 2450), str(row['수급자명']), fill="black", font=font_huge)
+                    draw.text((1500, 2750), str(row['인정관리번호']), fill="black", font=font_large)
+                    draw.text((3800, 2450), date_range, fill="black", font=font_large)
                     
-                    # 2. 금액표
-                    draw.text((300, 315), f"{own_pay:,}", fill="black", font=font_main)
-                    draw.text((300, 340), f"{pub_pay:,}", fill="black", font=font_main)
-                    draw.text((300, 365), f"{total_pay:,}", fill="black", font=font_main)
+                    # 2. 금액표 (중앙 및 우측 상단 칸 등)
+                    # 본인부담, 공단부담, 급여계
+                    draw.text((3000, 3150), f"{own_pay:,}", fill="black", font=font_huge)
+                    draw.text((3000, 3400), f"{pub_pay:,}", fill="black", font=font_huge)
+                    draw.text((3000, 3650), f"{total_pay:,}", fill="black", font=font_huge)
                     
                     # 우측 총액 부분
-                    draw.text((580, 315), f"{total_pay:,}", fill="black", font=font_main)
-                    draw.text((580, 350), f"{own_pay:,}", fill="black", font=font_main)
+                    draw.text((5800, 3150), f"{total_pay:,}", fill="black", font=font_huge)
+                    draw.text((5800, 3500), f"{own_pay:,}", fill="black", font=font_huge)
                     
                     # 3. 하단 발행일 (말일)
-                    draw.text((580, 755), publish_date, fill="black", font=font_main)
+                    # 대표자 위쪽 적절한 위치 (Y좌표 755 -> 7550으로 변경)
+                    draw.text((5800, 7550), publish_date, fill="black", font=font_huge)
                     
                     img_byte_arr = io.BytesIO()
                     img.save(img_byte_arr, format='PNG')
                     zip_file.writestr(f"{row['수급자명']}_명세서.png", img_byte_arr.getvalue())
             
-            st.success(f"성공! {len(final_df)}명의 명세서가 준비되었습니다.")
-            st.download_button("📥 압축파일 다운로드", data=zip_buffer.getvalue(), file_name=f"하예성_명세서_{min_date.strftime('%Y%m')}.zip")
+            st.success(f"성공! {publish_date} 발행분 ({len(final_df)}명)")
+            st.download_button("📥 전체 명세서 다운로드", data=zip_buffer.getvalue(), file_name=f"하예성_명세서_{min_date.strftime('%Y%m')}.zip")
             
         except Exception as e:
             st.error(f"오류가 발생했습니다: {e}")
