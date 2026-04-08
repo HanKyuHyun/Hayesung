@@ -32,16 +32,16 @@ def draw_invoice(row, date_range, publish_date_str):
         f_name = f_main = f_date = ImageFont.load_default()
 
         
-   # --- [1. 인적사항: 사장님 좌표 그대로 유지] ---
+ # --- [1. 인적사항: 사장님 좌표 유지] ---
     Y_LINE = 780 
     draw.text((220, Y_LINE), str(row['수급자명']), fill="black", font=f_name)
     draw.text((380, Y_LINE + 5), str(row['인정관리번호']), fill="black", font=f_main)
     draw.text((635, Y_LINE + 10), date_range, fill="black", font=f_date)
     
-    # --- [2. 급여항목: ₩ 왼쪽 고정 & 숫자 우측 정렬] ---
-    # L_X: ₩ 기호 위치 (칸의 왼쪽 끝으로 적당히 잡았습니다. 보시고 조정하세요)
-    # R_X: 사장님이 정하신 숫자 끝점 (950)
-    L_X = 680  
+    # --- [2. 급여항목: 기호 왼쪽 이동] ---
+    # L_X: 기존 680에서 100픽셀 왼쪽으로 이동 -> 580
+    # R_X: 사장님 기존 숫자 끝점 유지 -> 950
+    L_X = 580  
     R_X = 950  
     
     # 본인부담금 (Y=888)
@@ -56,10 +56,10 @@ def draw_invoice(row, date_range, publish_date_str):
     draw.text((L_X, 1030), "₩", fill="black", font=f_main)
     draw.text((R_X, 1030), f"{total_amt:,}", fill="black", font=f_main, anchor="ra")
     
-    # --- [3. 금액산정내역: ₩ 왼쪽 고정 & 숫자 우측 정렬] ---
-    # R_L_X: 오른쪽 칸의 ₩ 시작점 (적당히 잡은 위치입니다)
-    # R_R_X: 사장님이 정하신 숫자 끝점 (1670)
-    R_L_X = 1380 
+    # --- [3. 금액산정내역: 기호 왼쪽 이동] ---
+    # R_L_X: 기존 1380에서 100픽셀 왼쪽으로 이동 -> 1280
+    # R_R_X: 사장님 기존 숫자 끝점 유지 -> 1670
+    R_L_X = 1280 
     R_R_X = 1670 
     
     # 총액 (Y=915)
@@ -69,6 +69,7 @@ def draw_invoice(row, date_range, publish_date_str):
     # 본인부담총액 (Y=1010)
     draw.text((R_L_X, 1010), "₩", fill="black", font=f_main)
     draw.text((R_R_X, 1010), f"{own_amt:,}", fill="black", font=f_main, anchor="ra")
+    
     # 4. 하단 발행일
     draw.text((1350, 2050), publish_date_str, fill="black", font=f_main)
     
