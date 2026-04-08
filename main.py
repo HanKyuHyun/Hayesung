@@ -63,4 +63,29 @@ if file1 and file2:
                     # 1. 인적사항
                     draw.text((280, 1005), str(row['수급자명']), fill="black", font=f_name)
                     draw.text((280, 1155), str(row['인정관리번호']), fill="black", font=f_main)
-                    draw.
+                    draw.text((680, 1155), date_range, fill="black", font=f_date)
+                    
+                    # 2. 왼쪽 급여 내역
+                    draw.text((700, 1315), f"{own_amt:,}", fill="black", font=f_main) # 본인부담
+                    draw.text((700, 1440), f"{pub_amt:,}", fill="black", font=f_main) # 공단부담
+                    draw.text((700, 1560), f"{total_amt:,}", fill="black", font=f_main) # 합계
+                    
+                    # 3. 오른쪽 금액산정내역
+                    draw.text((1150, 1375), f"{total_amt:,}", fill="black", font=f_main) # 총액
+                    draw.text((1150, 1605), f"{own_amt:,}", fill="black", font=f_main)   # 본인부담총액
+                    
+                    # 4. 수납금액 합계 (하단 큰 글씨)
+                    draw.text((1400, 2155), f"{own_amt:,}", fill="black", font=f_name)
+                    
+                    # 5. 하단 발행일
+                    draw.text((1200, 3055), publish_date, fill="black", font=f_main)
+                    
+                    img_byte_arr = io.BytesIO()
+                    img.save(img_byte_arr, format='PNG')
+                    zip_file.writestr(f"{row['수급자명']}_명세서.png", img_byte_arr.getvalue())
+            
+            st.success(f"✅ {len(final_df)}건 발행 완료! (원단위 올림 적용)")
+            st.download_button("📥 압축파일 다운로드", data=zip_buffer.getvalue(), file_name="하예성_명세서_최종.zip")
+            
+        except Exception as e:
+            st.error(f"오류: {e}")
