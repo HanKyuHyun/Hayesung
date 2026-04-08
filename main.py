@@ -113,8 +113,8 @@ if file1 and file2:
     if selected_name:
         row = final_df[final_df['수급자명'] == selected_name].iloc[0]
         # selectbox에서 선택한 어르신의 순번(idx)을 함께 보냅니다.
-idx = names.index(selected_name) + 1 
-preview_img = draw_invoice(row, date_range, publish_date_str, idx)
+        idx = names.index(selected_name) + 1 
+        preview_img = draw_invoice(row, date_range, publish_date_str, idx)
         st.image(preview_img, caption="폰트가 작아지고 급여칸이 위/왼쪽으로 이동했습니다.", use_container_width=True)
     
     if st.button("🎁 최종 보정본으로 전체 압축 생성"):
