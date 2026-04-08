@@ -33,6 +33,9 @@ if file1 and file2:
             df2['일자'] = pd.to_datetime(df2['일자'])
             min_date = df2['일자'].min()
             max_date = df2['일자'].max()
+            
+            # 표시용 날짜 포맷
+            year_month_label = min_date.strftime('%Y년 %m월분') # 예: 2026년 03월분
             date_range = f"{min_date.strftime('%Y-%m-%d')} ~ {max_date.strftime('%Y-%m-%d')}"
             publish_date = max_date.strftime('%Y년 %m월 %d일')
             
@@ -54,49 +57,47 @@ if file1 and file2:
                         img = Image.open("template.png")
                         if img.mode != 'RGB': img = img.convert('RGB')
                     except:
-                        st.error("이미지 오류! 깃허브에 template.png 파일이 있는지 확인해주세요.")
+                        st.error("이미지 오류! template.png 파일을 확인해주세요.")
                         st.stop()
 
                     draw = ImageDraw.Draw(img)
                     
-                    # 💡 거대 이미지에 맞춘 대형 폰트 설정 (기본 크기 10배 이상)
+                    # 폰트 설정
                     try:
-                        font_huge = ImageFont.truetype("malgun.ttf", 250) # 성명 등 메인 정보
-                        font_large = ImageFont.truetype("malgun.ttf", 180) # 인정번호 등 서브 정보
+                        font_title = ImageFont.truetype("malgun.ttf", 350) # 제목용 (매우 크게)
+                        font_huge = ImageFont.truetype("malgun.ttf", 250)
+                        font_large = ImageFont.truetype("malgun.ttf", 180)
                     except:
-                        # 맑은고딕 없으면 기본폰트 사용 (기본폰트는 작아서 안보일수 있습니다)
-                        font_huge = font_large = ImageFont.load_default()
-                        st.warning("malgun.ttf 폰트 파일이 없어 기본 폰트를 사용합니다. 글자가 매우 작게 보일 수 있습니다.")
+                        font_title = font_huge = font_large = ImageFont.load_default()
                     
-                    # --- [초고해상도 맞춤 좌표 섹션] ---
-                    # 사장님 양식의 정확한 위치는 모르지만, 이 거대 이미지 크기에 맞춘 대략적인 좌표입니다.
-                    # 결과물을 보시고 숫자를 조절해주세요.
+                    # --- [초고해상도 맞춤 좌표] ---
+                    
+                    # 0. 상단 제목 (0000년 00월분 장기요양급여 제공명세서)
+                    # 위치가 너무 위면 500을 더 키우세요.
+                    draw.text((1200, 500), f"{year_month_label} 장기요양급여 제공명세서", fill="black", font=font_title)
                     
                     # 1. 상단 정보
-                    # (성명, 인정번호, 기간)
                     draw.text((1500, 2450), str(row['수급자명']), fill="black", font=font_huge)
                     draw.text((1500, 2750), str(row['인정관리번호']), fill="black", font=font_large)
                     draw.text((3800, 2450), date_range, fill="black", font=font_large)
                     
-                    # 2. 금액표 (중앙 및 우측 상단 칸 등)
-                    # 본인부담, 공단부담, 급여계
+                    # 2. 금액표
                     draw.text((3000, 3150), f"{own_pay:,}", fill="black", font=font_huge)
                     draw.text((3000, 3400), f"{pub_pay:,}", fill="black", font=font_huge)
                     draw.text((3000, 3650), f"{total_pay:,}", fill="black", font=font_huge)
                     
-                    # 우측 총액 부분
+                    # 우측 총액
                     draw.text((5800, 3150), f"{total_pay:,}", fill="black", font=font_huge)
                     draw.text((5800, 3500), f"{own_pay:,}", fill="black", font=font_huge)
                     
                     # 3. 하단 발행일 (말일)
-                    # 대표자 위쪽 적절한 위치 (Y좌표 755 -> 7550으로 변경)
                     draw.text((5800, 7550), publish_date, fill="black", font=font_huge)
                     
                     img_byte_arr = io.BytesIO()
                     img.save(img_byte_arr, format='PNG')
                     zip_file.writestr(f"{row['수급자명']}_명세서.png", img_byte_arr.getvalue())
             
-            st.success(f"성공! {publish_date} 발행분 ({len(final_df)}명)")
+            st.success(f"완료! {year_month_label} 명세서 {len(final_df)}건 생성됨")
             st.download_button("📥 전체 명세서 다운로드", data=zip_buffer.getvalue(), file_name=f"하예성_명세서_{min_date.strftime('%Y%m')}.zip")
             
         except Exception as e:
