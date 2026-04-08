@@ -33,11 +33,7 @@ if file1 and file2:
             df2['일자'] = pd.to_datetime(df2['일자'])
             min_date = df2['일자'].min()
             max_date = df2['일자'].max()
-            
-            # 1. 급여제공기간용 (0000-00-00 ~ 0000-00-00)
             date_range = f"{min_date.strftime('%Y-%m-%d')} ~ {max_date.strftime('%Y-%m-%d')}"
-            
-            # 2. 하단 발행일용 (0000년 00월 00일 - 해당 월의 말일)
             publish_date = max_date.strftime('%Y년 %m월 %d일')
             
             # 수가 계산
@@ -58,26 +54,29 @@ if file1 and file2:
                         img = Image.open("template.png")
                         if img.mode != 'RGB': img = img.convert('RGB')
                     except:
-                        st.error("이미지 오류! template.png를 다시 확인해주세요.")
+                        st.error("이미지 오류! template.png 파일이 깃허브에 있는지 확인해주세요.")
                         st.stop()
 
                     draw = ImageDraw.Draw(img)
                     
-                    # 폰트 설정 (맑은고딕)
+                    # 폰트 설정 (맑은고딕이 없으면 기본폰트 사용)
                     try:
-                        font_main = ImageFont.truetype("malgun.ttf", 25)
+                        font_main = ImageFont.truetype("malgun.ttf", 22)
                         font_small = ImageFont.truetype("malgun.ttf", 18)
                     except:
                         font_main = font_small = ImageFont.load_default()
                     
-                    # --- [좌표 입력 섹션] 위치가 안 맞으면 아래 숫자들을 고치세요 ---
+                    # --- [좌표 입력 섹션] 사장님 양식에 맞춘 좌표 ---
+                    # 1. 상단 정보 (성명, 인정번호, 기간)
+                    draw.text((150, 245), str(row['수급자명']), fill="black", font=font_main)
+                    draw.text((150, 275), str(row['인정관리번호']), fill="black", font=font_small)
+                    draw.text((380, 245), date_range, fill="black", font=font_small)
                     
-                    # 상단 정보
-                    draw.text((150, 240), str(row['수급자명']), fill="black", font=font_main)
-                    draw.text((150, 280), str(row['인정관리번호']), fill="black", font=font_small)
+                    # 2. 금액표 (본인부담, 공단부담, 급여계)
+                    draw.text((300, 315), f"{own_pay:,}", fill="black", font=font_main)   # 본인부담금
+                    draw.text((300, 340), f"{pub_pay:,}", fill="black", font=font_main)   # 공단부담금
+                    draw.text((300, 365), f"{total_pay:,}", fill="black", font=font_main) # 급여계
                     
-                    # 중간 급여제공기간
-                    draw.text((350, 240), date_range, fill="black", font=font_small)
-                    
-                    # 금액표 (우측 정렬 느낌으로 좌표 조정 필요)
-                    draw.text((450, 420), f"{
+                    # 우측 상단 '총액(급여+비급여)' 칸 등에도 동일하게 기입
+                    draw.text((580, 315), f"{total_pay:,}", fill="black", font=font_main) # 총액
+                    draw.text((580, 35
