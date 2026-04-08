@@ -26,9 +26,9 @@ def draw_invoice(row, date_range, publish_date):
     
     try:
         # 칸 크기에 비해 글자가 너무 크지 않게 조절
-        f_name = ImageFont.truetype("malgun.ttf", 52) 
-        f_main = ImageFont.truetype("malgun.ttf", 45)
-        f_date = ImageFont.truetype("malgun.ttf", 38)
+        f_name = ImageFont.truetype("malgun.ttf", 30) 
+        f_main = ImageFont.truetype("malgun.ttf", 30)
+        f_date = ImageFont.truetype("malgun.ttf", 30)
     except:
         f_name = f_main = f_date = ImageFont.load_default()
 
@@ -36,26 +36,23 @@ def draw_invoice(row, date_range, publish_date):
     
     # 1. 인적사항 (성명/인정번호 왼쪽 정렬, 제공기간은 오른쪽 칸)
     # 성명 (Y축 720 라인으로 대폭 하향)
-    draw.text((250, 725), str(row['수급자명']), fill="black", font=f_name)
+    draw.text((133, 565), str(row['수급자명']), fill="black", font=f_name)
     # 인정번호 (성명 바로 아래칸 중앙)
-    draw.text((250, 830), str(row['인정관리번호']), fill="black", font=f_main)
+    draw.text((266, 565), str(row['인정관리번호']), fill="black", font=f_main)
     # 제공기간 (인정번호와 같은 높이, 오른쪽 칸 시작점)
-    draw.text((680, 725), date_range, fill="black", font=f_date)
+    draw.text((444, 565), date_range, fill="black", font=f_date)
     
     # 2. 왼쪽 '급여' 항목 금액 (X축을 750->850으로 밀어서 칸 중앙 배치)
-    draw.text((850, 1055), f"{own_amt:,}", fill="black", font=f_main) # 본인부담
-    draw.text((850, 1175), f"{pub_amt:,}", fill="black", font=f_main) # 공단부담
-    draw.text((850, 1295), f"{total_amt:,}", fill="black", font=f_main) # 급여계
+    draw.text((560, 650), f"{own_amt:,}", fill="black", font=f_main) # 본인부담
+    draw.text((560, 700), f"{pub_amt:,}", fill="black", font=f_main) # 공단부담
+    draw.text((560, 750), f"{total_amt:,}", fill="black", font=f_main) # 급여계
     
     # 3. 오른쪽 '금액산정내역' (X축을 1200->1350으로 밀어서 중앙 배치)
-    draw.text((1350, 1095), f"{total_amt:,}", fill="black", font=f_main) # 총액
-    draw.text((1350, 1335), f"{own_amt:,}", fill="black", font=f_main)   # 본인총액
+    draw.text((1075, 660), f"{total_amt:,}", fill="black", font=f_main) # 총액
+    draw.text((1075, 730), f"{own_amt:,}", fill="black", font=f_main)   # 본인총액
     
-    # 4. 수납금액 합계 (하단 큰 숫자 칸)
-    draw.text((1480, 1750), f"{own_amt:,}", fill="black", font=f_name)
-    
-    # 5. 하단 날짜 (발행일)
-    draw.text((1350, 2700), publish_date, fill="black", font=f_main)
+    # 4. 하단 날짜 (발행일)
+    draw.text((920, 1500), publish_date, fill="black", font=f_main)
     
     return img
 
