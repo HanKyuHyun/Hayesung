@@ -10,8 +10,12 @@ st.title("📄 하예성 명세서 (폰트 축소 및 급여칸 보정)")
 
 RATE_MAP = {'일반': 0.15, '감경(40%)': 0.09, '감경(60%)': 0.06, '의료': 0.06, '기초': 0.0}
 
-def ceil_10(value):
-    return math.ceil(value / 10) * 10
+# 1. 0원 처리 함수 (여기에 넣어주세요!)
+def format_amt(amt):
+    """0원일 경우 '-'로 표시하고, 그 외에는 천단위 콤마 추가"""
+    if amt == 0:
+        return "-"
+    return f"{amt:,}"
 
 def draw_invoice(row, date_range, publish_date_str):
     total_amt = int(row['수가'])
@@ -38,37 +42,35 @@ def draw_invoice(row, date_range, publish_date_str):
     draw.text((380, Y_LINE + 5), str(row['인정관리번호']), fill="black", font=f_main)
     draw.text((635, Y_LINE + 10), date_range, fill="black", font=f_date)
     
-    # --- [2. 급여항목: 기호 왼쪽 이동] ---
-    # L_X: 기존 680에서 100픽셀 왼쪽으로 이동 -> 580
-    # R_X: 사장님 기존 숫자 끝점 유지 -> 950
-    L_X = 580  
+    # --- [2. 급여항목: ₩ 기호 50px 우측 이동 및 0원 처리] ---
+    # L_X: 580 -> 630 (50픽셀 우측 이동)
+    # R_X: 950 (사장님 고정 좌표)
+    L_X = 630  
     R_X = 950  
     
     # 본인부담금 (Y=888)
     draw.text((L_X, 888), "₩", fill="black", font=f_main)
-    draw.text((R_X, 888), f"{own_amt:,}", fill="black", font=f_main, anchor="ra")
+    draw.text((R_X, 888), format_amt(own_amt), fill="black", font=f_main, anchor="ra")
     
     # 공단부담금 (Y=960)
     draw.text((L_X, 960), "₩", fill="black", font=f_main)
-    draw.text((R_X, 960), f"{pub_amt:,}", fill="black", font=f_main, anchor="ra")
+    draw.text((R_X, 960), format_amt(pub_amt), fill="black", font=f_main, anchor="ra")
     
     # 급여 계 (Y=1030)
     draw.text((L_X, 1030), "₩", fill="black", font=f_main)
-    draw.text((R_X, 1030), f"{total_amt:,}", fill="black", font=f_main, anchor="ra")
+    draw.text((R_X, 1030), format_amt(total_amt), fill="black", font=f_main, anchor="ra")
     
-    # --- [3. 금액산정내역: 기호 왼쪽 이동] ---
-    # R_L_X: 기존 1380에서 100픽셀 왼쪽으로 이동 -> 1280
-    # R_R_X: 사장님 기존 숫자 끝점 유지 -> 1670
+    # --- [3. 금액산정내역: 사장님 요청으로 수정 없음] ---
     R_L_X = 1280 
     R_R_X = 1670 
     
     # 총액 (Y=915)
     draw.text((R_L_X, 915), "₩", fill="black", font=f_main)
-    draw.text((R_R_X, 915), f"{total_amt:,}", fill="black", font=f_main, anchor="ra")
+    draw.text((R_R_X, 915), format_amt(total_amt), fill="black", font=f_main, anchor="ra")
     
     # 본인부담총액 (Y=1010)
     draw.text((R_L_X, 1010), "₩", fill="black", font=f_main)
-    draw.text((R_R_X, 1010), f"{own_amt:,}", fill="black", font=f_main, anchor="ra")
+    draw.text((R_R_X, 1010), format_amt(own_amt), fill="black", font=f_main, anchor="ra")
     
     # 4. 하단 발행일
     draw.text((1350, 2050), publish_date_str, fill="black", font=f_main)
