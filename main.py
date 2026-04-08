@@ -70,4 +70,31 @@ if file1 and file2:
     df2 = pd.read_excel(file2)
     
     df2['일자'] = pd.to_datetime(df2['일자'])
-    min_date =
+    min_date = df2['일자'].min()
+    max_date = df2['일자'].max()
+    date_range = f"{min_date.strftime('%Y-%m-%d')}~{max_date.strftime('%Y-%m-%d')}"
+    publish_date = max_date.strftime('%Y      %m      %d')
+    
+    df2['수가'] = pd.to_numeric(df2['수가'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+    df2_sum = df2.groupby('수급자명')['수가'].sum().reset_index()
+    final_df = pd.merge(df1, df2_sum, on='수급자명', how='inner')
+
+    st.subheader("👀 실시간 미리보기")
+    selected_person = st.selectbox("확인할 수급자를 선택하세요", final_df['수급자명'].tolist())
+    
+    if selected_person:
+        row = final_df[final_df['수급자명'] == selected_person].iloc[0]
+        preview_img = draw_invoice(row, date_range, publish_date)
+        # 화면에 맞게 리사이즈해서 보여줌
+        st.image(preview_img, caption=f"{selected_person}님 명세서 미리보기", use_container_width=True)
+
+    if st.button("🎁 전체 명세서 압축 다운로드"):
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+            for _, row in final_df.iterrows():
+                img = draw_invoice(row, date_range, publish_date)
+                img_byte_arr = io.BytesIO()
+                img.save(img_byte_arr, format='PNG')
+                zip_file.writestr(f"{row['수급자명']}_명세서.png", img_byte_arr.getvalue())
+        
+        st.download_button("📥 압축파일 받기", data=zip_buffer.getvalue(), file_name="하예성_최종_명세서.zip")
