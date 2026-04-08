@@ -50,7 +50,7 @@ def draw_invoice(row, date_range, publish_date_str):
     draw.text((1350, 1260), f"{own_amt:,}", fill="black", font=f_main)   
     
     # 4. 하단 발행일
-    draw.text((1250, 2700), publish_date_str, fill="black", font=f_main)
+    draw.text((1250, 2200), publish_date_str, fill="black", font=f_main)
     
     return img
 
