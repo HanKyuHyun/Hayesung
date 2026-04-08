@@ -39,7 +39,12 @@ def draw_invoice(row, date_range, publish_date_str):
     except:
         f_name = f_main = f_date = ImageFont.load_default()
 
-        
+   # --- [0. 영수증 번호 추가] ---
+    # 사장님 요청: 2026-03-01 형태 (발행월-순번)
+    # publish_date_str에서 연-월을 가져와 순번을 붙입니다.
+    receipt_no = f"2026-03-{seq_num:02d}" 
+    draw.text((1350, 780), receipt_no, fill="black", font=f_main) # 영수증 번호 칸 위치   
+    
  # --- [1. 인적사항: 사장님 좌표 유지] ---
     Y_LINE = 780 
     draw.text((220, Y_LINE), str(row['수급자명']), fill="black", font=f_name)
