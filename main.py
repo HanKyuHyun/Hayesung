@@ -28,12 +28,17 @@ if file1 and file2:
             df1 = pd.read_excel(file1)
             df2 = pd.read_excel(file2)
             
-            # 💡 수정된 부분: '이름' 대신 '수급자명'을 기준으로 합산합니다.
-            # 엑셀에 금액 숫자에 콤마(,)가 있어도 계산 가능하도록 처리합니다.
+            # --- 날짜 자동 계산 로직 ---
+            # '일자' 컬럼을 날짜 형식으로 변환
+            df2['일자'] = pd.to_datetime(df2['일자'])
+            start_date = df2['일자'].min().strftime('%Y-%m-%d') # 제일 빠른 날
+            end_date = df2['일자'].max().strftime('%Y-%m-%d')   # 제일 늦은 날
+            date_range = f"{start_date} ~ {end_date}"
+            
+            # 수가 계산 (콤마 제거 및 숫자 변환)
             df2['수가'] = pd.to_numeric(df2['수가'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
             df2_sum = df2.groupby('수급자명')['수가'].sum().reset_index()
             
-            # 데이터 병합 (둘 다 '수급자명' 기준)
             final_df = pd.merge(df1, df2_sum, on='수급자명', how='inner')
             
             zip_buffer = io.BytesIO()
@@ -44,7 +49,15 @@ if file1 and file2:
                     own_pay = int(total_pay * user_rate) 
                     pub_pay = total_pay - own_pay 
                     
-                    img = Image.open("template.png").convert("RGB")
+                    # 이미지 열기 (오류 방지를 위해 최대한 단순하게 열기)
+                    try:
+                        img = Image.open("template.png")
+                        if img.mode != 'RGB':
+                            img = img.convert('RGB')
+                    except Exception as img_err:
+                        st.error("이미지 파일을 읽을 수 없습니다. template.png 파일을 삭제 후 다시 올려주세요.")
+                        st.stop()
+
                     draw = ImageDraw.Draw(img)
                     
                     try:
@@ -54,9 +67,15 @@ if file1 and file2:
                         font = ImageFont.load_default()
                         font_small = ImageFont.load_default()
                     
-                    # --- 좌표 입력 ---
+                    # --- 좌표 입력 (사장님 양식 위치에 맞춰 조정 필요) ---
+                    # 1. 성명 및 정보
                     draw.text((150, 240), str(row['수급자명']), fill="black", font=font)
-                    draw.text((300, 240), str(row['인정관리번호']), fill="black", font=font_small)
+                    draw.text((150, 280), str(row['인정관리번호']), fill="black", font=font_small)
+                    
+                    # 2. 💡 자동 계산된 날짜 기입 (급여제공기간 칸)
+                    draw.text((350, 240), date_range, fill="black", font=font_small)
+                    
+                    # 3. 금액 기입
                     draw.text((450, 420), f"{own_pay:,}", fill="black", font=font)
                     draw.text((450, 450), f"{pub_pay:,}", fill="black", font=font)
                     draw.text((450, 480), f"{total_pay:,}", fill="black", font=font)
@@ -65,8 +84,8 @@ if file1 and file2:
                     img.save(img_byte_arr, format='PNG')
                     zip_file.writestr(f"{row['수급자명']}_명세서.png", img_byte_arr.getvalue())
             
-            st.success(f"총 {len(final_df)}명의 명세서 생성이 완료되었습니다!")
-            st.download_button("📥 압축파일 다운로드", data=zip_buffer.getvalue(), file_name="하예성_명세서_전체.zip")
+            st.success(f"기간: {date_range} / 총 {len(final_df)}명 완료!")
+            st.download_button("📥 압축파일 다운로드", data=zip_buffer.getvalue(), file_name=f"하예성_명세서_{start_date[:7]}.zip")
             
         except Exception as e:
             st.error(f"오류가 발생했습니다: {e}")
