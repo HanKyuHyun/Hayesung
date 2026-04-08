@@ -1,0 +1,51 @@
+import streamlit as st
+import pandas as pd
+from PIL import Image, ImageDraw, ImageFont
+import io
+import zipfile
+
+st.title("하예성 복지센터 명세서 자동 생성기")
+
+# 자격별 본인부담율 설정 (센터 상황에 맞게 수정 가능)
+RATE_MAP = {'일반': 0.15, '경감9%': 0.09, '경감6%': 0.06, '기초': 0.0}
+
+file1 = st.file_uploader("1. 수급자구분변경이력 파일 (xlsx)", type=['xlsx'])
+file2 = st.file_uploader("2. 일정계획 파일 (xlsx)", type=['xlsx'])
+
+if file1 and file2:
+    if st.button("명세서 일괄 생성 시작"):
+        df1 = pd.read_excel(file1)
+        df2 = pd.read_excel(file2)
+        
+        # 성명별 수가 합계 (파일 2)
+        df2_sum = df2.groupby('이름')['수가'].sum().reset_index()
+        
+        # 데이터 병합 (파일 1 + 파일 2)
+        final_df = pd.merge(df1, df2_sum, left_on='수급자명', right_on='이름', how='inner')
+        
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+            for _, row in final_df.iterrows():
+                # 1. 계산 로직
+                total_pay = row['수가'] # 급여계
+                rate = RATE_MAP.get(row['자격'], 0.15) # 자격 매칭 안되면 일반 15% 적용
+                own_pay = int(total_pay * rate) # 본인부담금
+                pub_pay = total_pay - own_pay # 공단부담금
+                
+                # 2. 이미지 그리기
+                img = Image.open("template.png")
+                draw = ImageDraw.Draw(img)
+                font = ImageFont.truetype("malgun.ttf", 20) # 폰트 경로 주의
+                
+                # 좌표는 양식에 맞춰 미세 조정 필요 (x, y)
+                draw.text((150, 240), str(row['수급자명']), fill="black", font=font)
+                draw.text((450, 420), f"{own_pay:,}", fill="black", font=font) # 본인부담금
+                draw.text((450, 450), f"{pub_pay:,}", fill="black", font=font) # 공단부담금
+                draw.text((450, 480), f"{total_pay:,}", fill="black", font=font) # 급여계
+                
+                # 결과물 저장
+                img_byte_arr = io.BytesIO()
+                img.save(img_byte_arr, format='PNG')
+                zip_file.writestr(f"{row['수급자명']}_명세서.png", img_byte_arr.getvalue())
+        
+        st.download_button("📥 전체 명세서 다운로드 (.zip)", data=zip_buffer.getvalue(), file_name="명세서_결과.zip")
