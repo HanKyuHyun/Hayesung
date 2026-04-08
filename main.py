@@ -40,13 +40,13 @@ def draw_invoice(row, date_range, publish_date_str):
     draw.text((630, Y_LINE + 10), date_range, fill="black", font=f_date) # X: 720->700
     
     # 2. 왼쪽 '급여' 항목: 요청대로 위로 100 올리고, 왼쪽으로 더 많이(800->750) 이동
-    draw.text((800, 888), f"₩{own_amt:,}", fill="black", font=f_main) 
-    draw.text((800, 960), f"₩{pub_amt:,}", fill="black", font=f_main) 
-    draw.text((800, 1030), f"₩{total_amt:,}", fill="black", font=f_main) 
+    draw.text((800, 888), f"₩{own_amt:,}", fill="black", font=f_main,anchor="ra") 
+    draw.text((800, 960), f"₩{pub_amt:,}", fill="black", font=f_main,anchor="ra") 
+    draw.text((800, 1030), f"₩{total_amt:,}", fill="black", font=f_main,anchor="ra") 
     
     # 3. 오른쪽 '금액산정내역': 오른쪽 선 침범 방지를 위해 왼쪽으로 많이 당김 (1350->1250)
-    draw.text((1550, 915), f"₩{total_amt:,}", fill="black", font=f_main) 
-    draw.text((1550, 1000), f"₩{own_amt:,}", fill="black", font=f_main)
+    draw.text((1550, 915), f"₩{total_amt:,}", fill="black", font=f_main,anchor="ra") 
+    draw.text((1550, 1000), f"₩{own_amt:,}", fill="black", font=f_main,anchor="ra")
   
     # 4. 하단 발행일
     draw.text((1350, 2050), publish_date_str, fill="black", font=f_main)
