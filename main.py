@@ -76,4 +76,15 @@ if file1 and file2:
                     draw.text((3250, 5200), f"{own_amt:,}", fill="black", font=f_mid)
                     
                     # 5. 하단 발행일 및 '중간' 체크
-                    draw.text((3
+                    draw.text((3880, 1370), "v", fill="black", font=f_name) # 중간(V) 체크
+                    draw.text((2600, 7550), pub_date_str, fill="black", font=f_mid) # 하단 날짜
+                    
+                    img_byte_arr = io.BytesIO()
+                    img.save(img_byte_arr, format='PNG')
+                    zip_file.writestr(f"{row['수급자명']}_{min_date.strftime('%m월')}.png", img_byte_arr.getvalue())
+            
+            st.success(f"✅ {len(final_df)}건 발행 완료! 이제 다운로드하세요.")
+            st.download_button("📥 압축파일 다운로드", data=zip_buffer.getvalue(), file_name=f"하예성_결과_{min_date.strftime('%Y%m')}.zip")
+            
+        except Exception as e:
+            st.error(f"오류: {e}")
