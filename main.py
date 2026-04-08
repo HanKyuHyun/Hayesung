@@ -71,4 +71,47 @@ def draw_invoice(row, date_range, publish_date_str, seq_num):
     
     return img
 
-#
+# --- 3. 파일 업로드 및 데이터 처리 ---
+col1, col2 = st.columns(2)
+with col1:
+    file1 = st.file_uploader("1. 수급자구분변경이력 (xlsx)", type=['xlsx'])
+with col2:
+    file2 = st.file_uploader("2. 일정계획 (xlsx)", type=['xlsx'])
+
+if file1 and file2:
+    df1 = pd.read_excel(file1)
+    df2 = pd.read_excel(file2)
+    
+    df2['일자'] = pd.to_datetime(df2['일자'])
+    min_date = df2['일자'].min()
+    max_date = df2['일자'].max()
+    date_range = f"{min_date.strftime('%Y-%m-%d')} ~ {max_date.strftime('%Y-%m-%d')}"
+    publish_date_str = max_date.strftime('%Y년 %m월 %d일')
+    
+    df2['수가'] = pd.to_numeric(df2['수가'].astype(str).str.replace(',', ''), errors='coerce').fillna(0)
+    df2_sum = df2.groupby('수급자명')['수가'].sum().reset_index()
+    final_df = pd.merge(df1, df2_sum, on='수급자명', how='inner')
+
+    # [중요] 순번 계산을 위해 names 리스트를 여기서 생성합니다.
+    names = final_df['수급자명'].tolist()
+
+    st.divider()
+    selected_name = st.selectbox("어르신 성함을 선택하세요", names)
+    
+    if selected_name:
+        idx = names.index(selected_name) + 1 
+        row = final_df[final_df['수급자명'] == selected_name].iloc[0]
+        # 함수에 idx(순번)를 함께 전달합니다.
+        preview_img = draw_invoice(row, date_range, publish_date_str, idx)
+        st.image(preview_img, caption=f"영수증 번호: 2026-03-{idx:02d}가 적용되었습니다.", use_container_width=True)
+    
+    if st.button("🎁 최종 보정본으로 전체 압축 생성"):
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+            # 전체 압축 시에도 i(순번)를 전달하도록 수정했습니다.
+            for i, (_, row) in enumerate(final_df.iterrows(), 1):
+                img = draw_invoice(row, date_range, publish_date_str, i)
+                img_byte_arr = io.BytesIO()
+                img.save(img_byte_arr, format='PNG')
+                zip_file.writestr(f"{i:02d}_{row['수급자명']}_명세서.png", img_byte_arr.getvalue())
+        st.download_button("📥 압축파일 다운로드", data=zip_buffer.getvalue(), file_name="하예성_명세서_최종본.zip")
