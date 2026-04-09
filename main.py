@@ -14,7 +14,7 @@ RATE_MAP = {'일반': 0.15, '감경(40%)': 0.09, '감경(60%)': 0.06, '의료': 
 
 def round_10(value):
     """1원 단위에서 반올림하여 10원 단위로 만듦 (예: 125원 -> 130원, 124원 -> 120원)"""
-    return int(round(value, -1))
+    return int(rounddown(value, -1))
 
 def format_amt(amt):
     if amt == 0: return "-"
