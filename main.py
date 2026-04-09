@@ -3,16 +3,15 @@ import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
 import io
 import zipfile
+import math
 
 # ---------------------------------------------------------
 # 1. 설정 및 계산 함수들
 # ---------------------------------------------------------
 st.set_page_config(page_title="하예성 복지센터", layout="wide")
-st.title("📄 하예성 명세서 (반올림 및 날짜 자동 인식)")
+st.title("📄 하예성 명세서 (10원 단위 내림 및 날짜 자동 인식)")
 
 RATE_MAP = {'일반': 0.15, '감경(40%)': 0.09, '감경(60%)': 0.06, '의료': 0.06, '기초': 0.0}
-
-import math
 
 def floor_10(value):
     """1원 단위에서 무조건 내림하여 10원 단위로 만듦 (예: 129원 -> 120원)"""
@@ -30,8 +29,8 @@ def draw_invoice(row, date_range, publish_date_str, seq_num, receipt_month):
     user_status = str(row['자격']).strip()
     rate = RATE_MAP.get(user_status, 0.15)
     
-    # [수정] 올림(ceil) 대신 반올림(round) 적용
-    own_amt = round_10(total_amt * rate) 
+    # [수정] 10원 단위 내림(floor_10)을 적용합니다.
+    own_amt = floor_10(total_amt * rate) 
     pub_amt = total_amt - own_amt        
     
     img = Image.open("template.png").convert('RGB')
@@ -44,7 +43,7 @@ def draw_invoice(row, date_range, publish_date_str, seq_num, receipt_month):
     except:
         f_name = f_main = f_date = ImageFont.load_default()
 
-    # 영수증 번호
+    # 영수증 번호 (좌표: 1250, 780)
     receipt_no = f"2026-{receipt_month:02d}-{seq_num:02d}" 
     draw.text((1250, 780), receipt_no, fill="black", font=f_main)
 
@@ -70,7 +69,7 @@ def draw_invoice(row, date_range, publish_date_str, seq_num, receipt_month):
     draw.text((R_L_X, 1010), "₩", fill="black", font=f_main)
     draw.text((R_R_X, 1010), format_amt(own_amt), fill="black", font=f_main, anchor="ra")
     
-    # 하단 발행일
+    # 하단 발행일 (좌표: 1350, 2050)
     draw.text((1350, 2050), publish_date_str, fill="black", font=f_main)
     
     return img
@@ -110,15 +109,6 @@ if file1 and file2:
         idx = names.index(selected_name) + 1 
         row = final_df[final_df['수급자명'] == selected_name].iloc[0]
         preview_img = draw_invoice(row, date_range, publish_date_str, idx, receipt_month)
-        st.image(preview_img, caption=f"영수증 번호: 2026-{receipt_month:02d}-{idx:02d} (반올림 적용)", use_container_width=True)
+        st.image(preview_img, caption=f"영수증 번호: 2026-{receipt_month:02d}-{idx:02d} (내림 처리 적용)", use_container_width=True)
     
-    st.divider()
-    if st.button("🎁 최종 보정본으로 전체 압축 생성"):
-        zip_buffer = io.BytesIO()
-        with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
-            for i, (_, row) in enumerate(final_df.iterrows(), 1):
-                img = draw_invoice(row, date_range, publish_date_str, i, receipt_month)
-                img_byte_arr = io.BytesIO()
-                img.save(img_byte_arr, format='PNG')
-                zip_file.writestr(f"{i:02d}_{row['수급자명']}_명세서.png", img_byte_arr.getvalue())
-        st.download_button("📥 압축파일 다운로드", data=zip_buffer.getvalue(), file_name=f"하예성_명세서_{receipt_month}월분.zip")
+    st.
