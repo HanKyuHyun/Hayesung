@@ -3,31 +3,33 @@ import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
 import io
 import zipfile
-import math
 
 # ---------------------------------------------------------
 # 1. 설정 및 계산 함수들
 # ---------------------------------------------------------
 st.set_page_config(page_title="하예성 복지센터", layout="wide")
-st.title("📄 하예성 명세서 (날짜 자동 인식 버전)")
+st.title("📄 하예성 명세서 (반올림 및 날짜 자동 인식)")
 
 RATE_MAP = {'일반': 0.15, '감경(40%)': 0.09, '감경(60%)': 0.06, '의료': 0.06, '기초': 0.0}
 
-def ceil_10(value):
-    return math.ceil(value / 10) * 10
+def round_10(value):
+    """1원 단위에서 반올림하여 10원 단위로 만듦 (예: 125원 -> 130원, 124원 -> 120원)"""
+    return int(round(value, -1))
 
 def format_amt(amt):
     if amt == 0: return "-"
     return f"{amt:,}"
 
 # ---------------------------------------------------------
-# 2. 명세서 그리기 함수 (receipt_month 추가)
+# 2. 명세서 그리기 함수
 # ---------------------------------------------------------
 def draw_invoice(row, date_range, publish_date_str, seq_num, receipt_month):
     total_amt = int(row['수가'])
     user_status = str(row['자격']).strip()
     rate = RATE_MAP.get(user_status, 0.15)
-    own_amt = ceil_10(total_amt * rate) 
+    
+    # [수정] 올림(ceil) 대신 반올림(round) 적용
+    own_amt = round_10(total_amt * rate) 
     pub_amt = total_amt - own_amt        
     
     img = Image.open("template.png").convert('RGB')
@@ -40,17 +42,17 @@ def draw_invoice(row, date_range, publish_date_str, seq_num, receipt_month):
     except:
         f_name = f_main = f_date = ImageFont.load_default()
 
-    # [0. 영수증 번호] 엑셀에서 읽어온 월(receipt_month)을 반영합니다.
+    # 영수증 번호
     receipt_no = f"2026-{receipt_month:02d}-{seq_num:02d}" 
     draw.text((1250, 780), receipt_no, fill="black", font=f_main)
 
-    # [1. 인적사항]
+    # 인적사항
     Y_LINE = 780 
     draw.text((220, Y_LINE), str(row['수급자명']), fill="black", font=f_name)
     draw.text((380, Y_LINE + 5), str(row['인정관리번호']), fill="black", font=f_main)
     draw.text((635, Y_LINE + 10), date_range, fill="black", font=f_date)
     
-    # [2. 급여항목] 630 / 950
+    # 급여항목 (₩ 630 / 숫자 950)
     L_X, R_X = 630, 950  
     draw.text((L_X, 888), "₩", fill="black", font=f_main)
     draw.text((R_X, 888), format_amt(own_amt), fill="black", font=f_main, anchor="ra")
@@ -59,14 +61,14 @@ def draw_invoice(row, date_range, publish_date_str, seq_num, receipt_month):
     draw.text((L_X, 1030), "₩", fill="black", font=f_main)
     draw.text((R_X, 1030), format_amt(total_amt), fill="black", font=f_main, anchor="ra")
     
-    # [3. 금액산정내역] 1280 / 1670
+    # 금액산정내역 (₩ 1280 / 숫자 1670)
     R_L_X, R_R_X = 1280, 1670 
     draw.text((R_L_X, 915), "₩", fill="black", font=f_main)
     draw.text((R_R_X, 915), format_amt(total_amt), fill="black", font=f_main, anchor="ra")
     draw.text((R_L_X, 1010), "₩", fill="black", font=f_main)
     draw.text((R_R_X, 1010), format_amt(own_amt), fill="black", font=f_main, anchor="ra")
     
-    # [4. 하단 발행일]
+    # 하단 발행일
     draw.text((1350, 2050), publish_date_str, fill="black", font=f_main)
     
     return img
@@ -87,8 +89,6 @@ if file1 and file2:
     df2['일자'] = pd.to_datetime(df2['일자'])
     min_date = df2['일자'].min()
     max_date = df2['일자'].max()
-    
-    # [핵심] 해당 데이터의 '월'을 추출합니다 (예: 1월이면 1)
     receipt_month = min_date.month 
     
     date_range = f"{min_date.strftime('%Y-%m-%d')} ~ {max_date.strftime('%Y-%m-%d')}"
@@ -107,9 +107,8 @@ if file1 and file2:
     if selected_name:
         idx = names.index(selected_name) + 1 
         row = final_df[final_df['수급자명'] == selected_name].iloc[0]
-        # receipt_month를 추가로 전달합니다.
         preview_img = draw_invoice(row, date_range, publish_date_str, idx, receipt_month)
-        st.image(preview_img, caption=f"영수증 번호: 2026-{receipt_month:02d}-{idx:02d}", use_container_width=True)
+        st.image(preview_img, caption=f"영수증 번호: 2026-{receipt_month:02d}-{idx:02d} (반올림 적용)", use_container_width=True)
     
     st.divider()
     if st.button("🎁 최종 보정본으로 전체 압축 생성"):
