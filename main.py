@@ -42,7 +42,7 @@ def draw_invoice(row, date_range, publish_date_str, seq_num, receipt_month):
 
     # [0. 영수증 번호] 엑셀에서 읽어온 월(receipt_month)을 반영합니다.
     receipt_no = f"2026-{receipt_month:02d}-{seq_num:02d}" 
-    draw.text((1350, 780), receipt_no, fill="black", font=f_main)
+    draw.text((1250, 780), receipt_no, fill="black", font=f_main)
 
     # [1. 인적사항]
     Y_LINE = 780 
