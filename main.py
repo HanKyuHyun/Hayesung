@@ -12,9 +12,11 @@ st.title("📄 하예성 명세서 (반올림 및 날짜 자동 인식)")
 
 RATE_MAP = {'일반': 0.15, '감경(40%)': 0.09, '감경(60%)': 0.06, '의료': 0.06, '기초': 0.0}
 
-def round_10(value):
-    """1원 단위에서 반올림하여 10원 단위로 만듦 (예: 125원 -> 130원, 124원 -> 120원)"""
-    return int(rounddown(value, -1))
+import math
+
+def floor_10(value):
+    """1원 단위에서 무조건 내림하여 10원 단위로 만듦 (예: 129원 -> 120원)"""
+    return math.floor(value / 10) * 10
 
 def format_amt(amt):
     if amt == 0: return "-"
