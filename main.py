@@ -111,4 +111,13 @@ if file1 and file2:
         preview_img = draw_invoice(row, date_range, publish_date_str, idx, receipt_month)
         st.image(preview_img, caption=f"영수증 번호: 2026-{receipt_month:02d}-{idx:02d} (내림 처리 적용)", use_container_width=True)
     
-    st.
+    st.divider()
+    if st.button("🎁 최종 보정본으로 전체 압축 생성"):
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+            for i, (_, row) in enumerate(final_df.iterrows(), 1):
+                img = draw_invoice(row, date_range, publish_date_str, i, receipt_month)
+                img_byte_arr = io.BytesIO()
+                img.save(img_byte_arr, format='PNG')
+                zip_file.writestr(f"{i:02d}_{row['수급자명']}_명세서.png", img_byte_arr.getvalue())
+        st.download_button("📥 압축파일 다운로드", data=zip_buffer.getvalue(), file_name=f"하예성_명세서_{receipt_month}월분.zip")
